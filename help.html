@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Track Help</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="http://maps.googleapis.com/maps/api/js" type="text/javascript">
+</script>
+<style>
+#header {
+    background-color: olive;
+    color:white;
+    text-align:center;
+    padding:5px;
+}
+#container {
+	 width: 1300px;
+	 height: 600px;
+	 margin: auto;
+	 float: left;
+	 border: ;
+}
+#navibar {
+    line-height:2em;
+    background-color:gray;
+    height:590px;
+    width:150px;
+    float:left;
+    padding:5px;	      
+}
+#naviul {
+	 list-style: none;
+	 border: ;
+	 overflow: hidden;
+	 margin-left: 0;
+	 padding: 0;
+}
+#naviul li {
+	 float: ;
+	 margin-top: 10px;	  	 
+}
+
+#hli {
+	 float: left;
+	 margin-top: 40px ! important;
+}
+
+#naviul li a {
+	 width: 130px;
+	 font-size: 14px;
+	 display: block;
+	 border: 1px solid #000;
+	 padding: 5px;
+	 background: #eeddbb;
+	 text-decoration: none;
+	 color: ;
+	 text-align: center;
+	 height: 2em;
+	 line-height: 2em;
+	 margin: 5px;
+}
+
+#section {
+    width:956px;
+    height: 600px;
+    float:left;
+    padding:;
+    text-align: center;
+    overflow: auto;	 	 
+}
+
+#footer {
+    background-color: green;
+    color:white;
+    clear:both;
+    text-align:center;
+    padding:5px;	 	 
+}
+
+p {
+	 text-align: left;
+	 color: ;
+	 font-size: ;
+	 text-indent: 2em;
+	 margin: 2px;
+}
+
+ol {
+	  text-align: left;
+}
+
+.ol1 {
+	  font-size: 100%;
+	  list-style-type: decimal;
+}
+
+.ol2 {
+	  font-size: 90%;
+	  list-style-type: lower-alpha;
+}
+
+.ol3 {
+	  font-size: 90%;
+	  list-style-type: lower-roman;
+}
+
+#p1 {
+	 text-align: left;
+	 color: red;
+	 font-size: 60%;
+}
+
+#pt {
+	 text-align: ;
+	 color: ;
+	 font-size: 80%;
+}
+
+</style>
+</head>
+<body>
+	
+<div id="header">
+<h1>Track Help</h1>
+</div>
+
+<script type="text/javascript" >
+function myFunction() {
+	var xa=document.getElementById("section").innerHTML;
+	document.getElementById("section1").innerHTML=xa;	
+}
+</script>
+
+<div id="container">
+	<div id="navibar">
+	   Start Options:
+		<ul id="naviul">
+		<li><a href="http://127.0.0.1:8000/index.html" >Click on map</a></li>
+		<li><a href="http://127.0.0.1:8000/index1.html" >Specify lat/lon</a></li>
+		<li><a href="http://127.0.0.1:8000/index2.html" >Use drifter fix</a></li>
+		<li id="hli"><a href="http://127.0.0.1:8000/help.html" >Help</a></li>
+		</ul>
+	</div>
+
+	<div id="section">
+	<h4>Help</h4>
+	
+	<p>Welcome. We assume users like yourself would like to track a few particles through ocean 
+	modelled flow fields on the Northeast Continental Shelf and you only want to track them for 
+	a few days.  If you are interested in tracking more than a few particles for a longer time 
+	you might be better off downloading the package to your machine and running it there. Whatever 
+	works best for you. We hope to be always improving this web utility and posted package in the 
+	future so we encourage you to comment and request changes/improvements. Contact james.manning@noaa.gov.</p>
+	
+	<h5>How to run this web version in two basic steps:</h5>
+	
+	<ol class="ol1">
+	<li>Select the “Start Option” mode which determines how you specify initial points
+	    <ol class="ol2">
+	    <li>“<strong>Click Map</strong>” default option allows the user to click on the map
+	    　　　　<ol class="ol3">
+	        <li>multiple clicks are allowed but, unless you are very patient, don’t click too many</li>
+	        <li>if you plan to use something other than the “massbay” model grid, you can zoom out to include the entire Gulf of Maine and Southern New England</li>
+	        </ol>
+	    </li>
+	    <li>“<strong>Specify lat/lon</strong>” provides a text box for the user to enter latitude and longitude in decimal degrees in the text box on the right panel</li>
+	    <li>“<strong>Use drifter fix</strong>” option requires the user to know two things and to enter them in the text box on the right panel
+	    　　　　<ol class="ol3">
+	        <li>“Drifter ID” is typically a 9-digit drifter deployment code (pe“154420701”)</li>
+	        <li>“Date type” is the name of the raw drifter data (pe “drift_su_2014_1.dat”)</li>
+	        <li>This option currently starts your modelled particle track at the last observation of the drifter so it is, in effect, forecasting where the drifter will go in the future.</li>
+	        </ol>	    
+	    </li>
+	    </ol>
+	</li>
+	<li>Select the other options on the right hand panel which all include
+	　　　　<ol class="ol2">
+	    <li><strong>Model grid</strong>
+	    　　　　<ol class="ol3">
+	        <li>your selection here will govern what model output time range is available</li>
+	        <li>massbay and gom3 grids typically allow +/- 3 days from present and 30yr grid allows 1978-2013</li>
+	        </ol>
+	    </li>
+	    <li><strong>Forward or backward tracking</strong></li>
+	    <li><strong>Time to start</strong>
+	    　　　　<ol class="ol3">
+	        <li>using format as shown in the example <font color="red"> 2015-3-25 11:45</font> where hours are in UTC</li>
+	        <li>depending on the Model Grid you choose your desired time may or may not be available</li>
+	        </ol>	    
+	    </li>
+	    <li><strong>Number of days to track</strong>
+	    　　　　<ol class="ol3">
+	        <li>this can be in fractional days is needed</li>
+	        </ol>	    
+	    </li>
+	    </ol>
+	</li>
+	</ol>
+	
+	<h5>How to download and run the track program locally</h5>
+	
+	<p>The full package  for super users is on the “<a href="https://github.com/Particles-in-the-Coastal-Ocean/Track_Python">Particles-in-the-Coastal-Ocean</a>” GitHub
+	 page under the Track_python repository.  There is a README file there and some additional 
+	 documentation under a the “planning lessons” pull down menu on the “<a href="http://studentdrifters.org/">studentdrifters.org</a>” website.</p>
+	 
+	 <h5>Acknowledgements</h5>
+	 
+	 <p id="pt">While parts of this particle tracking routine were originally written by Jim Manning and Vitalii 
+	 Sheremet, it has been further developed over several years by various programmers who have come and 
+	 gone (Jian Cui, Conner Warren, Nkosi Muse).  It is currently maintained and greatly improved by 
+	 Bingwei Ling. All of the above conducted this work at NOAA’s Northeast Fisheries Science Center while 
+	 learning how to use Python. We also acknowledge the modellers, Changsheng Chen especially, who provide 
+	 their output freely via OPeNDAP.</p>
+	 
+	</div>
+</div>
+
+<div id="footer">
+More detail email james.manning@noaa.gov 
+</div>
+
+</body>
+</html>

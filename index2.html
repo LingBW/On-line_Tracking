@@ -1,0 +1,272 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Fvcom Model Track</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="http://maps.googleapis.com/maps/api/js" type="text/javascript">
+</script>
+<style>
+#header {
+    background-color: blue;
+    color:white;
+    text-align:center;
+    padding:5px;
+}
+#container {
+	 width: 1300px;
+	 height: 600px;
+	 margin: auto;
+	 float: left;
+	 border: ;
+}
+#navibar {
+    line-height:2em;
+    background-color:gray;
+    height:590px;
+    width:150px;
+    float:left;
+    padding:5px;	      
+}
+#naviul {
+	 list-style: none;
+	 border: ;
+	 overflow: hidden;
+	 margin-left: 0;
+	 padding: 0;
+}
+#naviul li {
+	 float: ;
+	 margin-top: 10px;	  	 
+}
+
+#hli {
+	 float: left;
+	 margin-top: 40px ! important;
+}
+
+#naviul li a {
+	 width: 130px;
+	 font-size: 14px;
+	 display: block;
+	 border: 1px solid #000;
+	 padding: 5px;
+	 background: #eeddbb;
+	 text-decoration: none;
+	 color: ;
+	 text-align: center;
+	 height: 2em;
+	 line-height: 2em;
+	 margin: 5px;
+}
+
+#googleMap {
+	 width: 700px;
+	 height: 600px;
+	 border-left: 2px black solid;
+	 float: left;	
+}
+#optionbar {
+	 width: 250px;
+	 height: 600px;
+	 border: 2px black solid;
+	 border-top: 0px;
+	 border-bottom: 0px;
+	 float: left;
+	 background: white;
+	 overflow: auto;
+	}
+
+#optionbar li {
+	 margin-top: 10px;
+}	
+
+#optionbar h4 {
+    text-align: center; 
+    text-decoration: underline;
+}
+
+#footer {
+    background-color: green;
+    color:white;
+    clear:both;
+    text-align:center;
+    padding:5px;	 	 
+}
+
+#bposition {
+	 margin: 0 20px;
+}
+#rposition {
+	 margin: 0 20px;
+}
+#optionbar p {
+	 text-align: center;
+	 font-size: 80%;
+}
+
+</style>
+</head>
+<body>
+	<script type='text/javascript'>
+		var map;
+		var myCenter=new google.maps.LatLng(41.8,-70.3);
+		var lat = new Array();
+		var lon = new Array();
+
+		function initialize(){ var mapProp = {center:myCenter,zoom:9,mapTypeId:google.maps.MapTypeId.ROADMAP};
+				       map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
+				       
+				       //marker.setMap(map);
+				       google.maps.event.addListener(map, 'click', function(event){placeMarker(event.latLng);});
+				       
+				      };
+
+
+		//marker.setMap(map);
+
+		function placeMarker(location) 
+		{  
+		  var marker = new google.maps.Marker({position: location, map: map,});
+		  //marker.setMap(map);
+		  var infowindow = new google.maps.InfoWindow({content: 'Latitude: ' + location.lat() + '<br>Longitude: ' + location.lng()});
+		  //infowindow.open(map,marker); 
+		  //google.maps.event.addListener(marker, 'click', function() {infowindow.open(map,marker);});
+		  lat.push(location.lat());
+		  lon.push(location.lng());
+		  google.maps.event.addListener(marker,'click',function() {map.setZoom(10);map.setCenter(marker.getPosition());infowindow.open(map,marker);}); 
+		  
+		};
+		// Zoom to 9 when clicking on marker
+		//
+		google.maps.event.addDomListener(window, 'load', initialize); //document.getElementById("pointinfo").value = point;
+		function addpoint(ln,lt) 
+		{
+		  var ln = lon;
+		  var lt = lat;
+		  //window.alert('lat,lon'+ln.toString());
+		  if (ln.length!=0)
+		  {
+		    document.form1.lons.value = ln.toString(); //var slon = new String;
+		    document.form1.lats.value = lt.toString(); //var slat = new String;
+		  }
+		  else
+		  {
+		    window.alert("You didn't add point. Please click on the map")
+		    return false
+		  }
+		}
+
+
+		function confirm() 
+		{
+		  var ln = lon;
+		  var lt = lat;
+		  //window.alert('lats:'+lat+'lons:'+lon)
+		  //document.write('confrim')
+		}
+		function track() 
+		{
+		  var ln = lon;
+		  var lt = lat;
+		  //document.write('lat,lon'+lat+','+lon)
+		  window.alert('track')
+		}
+		//document.getElementById("side_bar").innerHTML = submit
+	</script>
+	
+	<script type='text/javascript'>
+	   function checkdrifter() 
+		{
+		  var did = document.form1.did.value;
+		  var dty = document.form1.dty.value;
+		  
+		  if (!did || !dty) {
+		  window.alert("You didn't enter a drifter.");
+		  return false	
+		  }
+		}
+		function checkstt()
+		{
+		  var val = document.form1.stt.value;
+		  //var len = document.form1.stt.value.length;
+		  //if (len==0){window.alert("You didn't enter the time.");}
+		  var ls = val.split('/');
+		  if (val){if (ls.length!=5){window.alert("Time format error.");document.form1.stt.value=null;};}
+		}
+		function checkedt()
+		{
+		  var val = document.form1.edt.value;
+		  //var len = document.form1.edt.value.length;
+		  //if (len==0){window.alert("You didn't enter the time.");}
+		  var ls = val.split('/');
+		  if (val){if (ls.length!=5){window.alert("Time format error.");document.form1.edt.value=null;};}
+		}
+	</script>
+	
+<div id="header">
+<h1>Drifter Track</h1>
+</div>
+
+<script type="text/javascript" >
+function myFunction() {
+	var xa=document.getElementById("section").innerHTML;
+	document.getElementById("section1").innerHTML=xa;
+	
+}
+</script>
+
+<div id="container">
+	<div id="navibar">
+	   Start Options:
+		<ul id="naviul">
+		<li><a href="http://127.0.0.1:8000/index.html" >Click on map</a></li>
+		<li><a href="http://127.0.0.1:8000/index1.html" >Specify lat/lon</a></li>
+		<li><a href="http://127.0.0.1:8000/index2.html" >Use drifter fix</a></li>
+		<li id="hli"><a href="http://127.0.0.1:8000/help.html" >Help</a></li>
+		</ul>
+	</div>
+
+	<!div id="section">
+		 <div id="googleMap" ></div>
+		 
+		 <div id="optionbar">		 
+	
+		    <h4 >Drifter Track</h4>
+		    		    
+		    <form action='/cgi-bin/drifter-track-CGI-new.py' method='POST' name='form1' onsubmit='return checkdrifter()' >
+		    	<ul class="ul">
+		    	<li >Drifter ID:</li>
+		      	<input type='text' name='did' value='' onblur=''>
+		      
+		      <li >Data Type:</li>
+		      	<input type='text' name='dty' value='' onblur=''>
+		      	
+		      <li>Depth(m):</li>
+			   	<input type='text' name='depth' size='2' value='1' onblur='' maxlength="4">
+		      <li >Number of days to track:</li>
+		      	<input type='text' name='tds' size='2' value='1' onblur='' maxlength="4">
+		      <li >Model grid:</li>
+		      	<select name="dset">
+				   <option value="massbay" selected="selected">massbay</option>
+				   <option value="GOM3">GOM3</option>
+		         </select>
+		      <li >Track direction:</li>
+		      	<input type="radio" name="tway" value="forward" checked="checked" > Forward<br />
+		         <input type="radio" name="tway" value="backward" /> Backward
+		      </ul>
+		         
+		      <input id="bposition" type='submit' name='submit' value='Submit' >
+			   <input id="rposition" type='reset' name='' value='Reset' onclick="initialize()" >			   
+		    </form>
+		    
+		    <p id="">See more Drifter track <a href="http://www.nefsc.noaa.gov/drifter/drift_X.html" >click here</a></p>	    
+		</div>
+	
+</div>
+
+<div id="footer">
+More detail email james.manning@noaa.gov 
+</div>
+
+</body>
+</html>
