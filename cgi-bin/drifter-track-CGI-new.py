@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env /anaconda/bin/python
 import cgitb
 cgitb.enable()
 import cgi,sys
@@ -52,7 +52,7 @@ print """
     a:hover {color: ;}
     a:active {color: #900;}
     body {
-        background-image: url(http://127.0.0.1:8000/image/20150412.jpg);
+        background-image: url(http://comet.nefsc.noaa.gov/ioos/track/r20150412.jpg);
         background-repeat: repeat;
         background-position: top center;
         background-attachment: scroll;
@@ -121,7 +121,7 @@ function setmarker(tlon,tlat) {
   var pmarker = new google.maps.LatLng(tlon,tlat);
   var marker = new google.maps.Marker({
   position: pmarker,
-  animation:google.maps.Animation.BOUNCE
+  //animation:google.maps.Animation.BOUNCE
   //title:'Click to zoom'
   });
   
@@ -180,7 +180,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
 
 <div id="container">
     <div id="googleMap" ></div>
-    <div id="sidebar" ><a id="ad" href="http://127.0.0.1:8000/index2.html">Track again</a></div>
+    <div id="sidebar" ><a id="ad" href="http://comet.nefsc.noaa.gov/ioos/track/index2.html">Track again</a></div>
 </div>
 
 """%(track_way,tds)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env /anaconda/bin/python
 import cgitb
 cgitb.enable()
 #import sys
