@@ -34,7 +34,7 @@ try:
         stime = parse(stt) #datetime(2015,2,10,12,0,0,0,pytz.UTC
         start_time = pytz.utc.localize(stime)
 except:
-    print '<h2>"Time format error."</h2>' 
+    print '<h2>"Start time: Error! Time format error."</h2>' 
     print '</head></html>'
     sys.exit() 
 stp_num = len(st_lat)   
@@ -53,7 +53,7 @@ if MODEL=='FVCOM':
     try:
         url_fvcom = get_obj.get_url(start_time,end_time)
     except:
-        print 'window.alert("Model not works this duration."); </head></html>'
+        print '<h2>"Start time: Error! Model not works this duration."</h2>; </head></html>'
         sys.exit()
     bpoints = get_obj.get_data(url_fvcom)        
     for i in range(stp_num):
@@ -74,7 +74,7 @@ print """
     a:hover {color: ;}
     a:active {color: #900;}
     body {
-        background-image: url(http://comet.nefsc.noaa.gov/ioos/track/r20150412.jpg);
+        background-image: url(http://127.0.0.1:8000/image/20150412.jpg);
         background-repeat: repeat;
         background-position: top center;
         background-attachment: scroll;

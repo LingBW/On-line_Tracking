@@ -111,8 +111,8 @@
 <body>
 	<script type='text/javascript'>
 		var map;
-		var lat = new Array();
-		var lon = new Array();
+		//var lat = new Array();
+		//var lon = new Array();
       var blon = [-70.56523132,-70.55568695,-70.54127502,-70.51769257,-70.4887085,-70.45444489, -70.41751099,-70.37443542,-70.32566833,-70.27555847,-70.22293091,
       -70.17166138,-70.12519073,-70.08081818,-70.03473663,-69.99349976,-69.95652771,-69.92127228,-69.88608551,-69.85466766,-69.82696533,-69.80090332,
       -69.77420807,-69.75162506,-69.72977448,-69.70681,-69.68741608,-69.66733551,-69.64723206,-69.62756348,-69.6092453,-69.59226227,-69.57754517,
@@ -159,8 +159,41 @@
  		35.97452545,35.81864929,35.66109848,35.51485062,35.40787125,35.37496567,35.42101669,35.56871414,35.76475525,35.99146652,36.22259903,
  		36.46731949,36.68853378,36.86878586,37.03686523,37.17869949,37.28518677,37.34851456];
 
-		function initialize(){ 
-		  if (document.form1.dset.value == "massbay") {
+		function initialize(){
+		  var lon = document.form1.alon.value;
+		  var lat = document.form1.alat.value;
+		  if (lon && lat) { 
+		  var point=new google.maps.LatLng(lat,lon);
+		  	     	
+        if (document.form1.dset.value == "massbay") {
+		  	 var myCenter=point;
+		    var mapProp = {center:myCenter,zoom:8,mapTypeId:google.maps.MapTypeId.ROADMAP};
+		    map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
+		    var bps = new Array;
+		    for (var i=0; i<blon.length; i++) {bps[i] = new google.maps.LatLng(blat[i],blon[i]);};
+		    var flightPath=new google.maps.Polyline({path:bps,strokeColor:"#0000FF",strokeOpacity:0.8,strokeWeight:2});
+		  }                
+		  
+		  if (document.form1.dset.value == "GOM3" || document.form1.dset.value == "30yr") {
+		  	 var myCenter=point;
+		    var mapProp = {center:myCenter,zoom:5,mapTypeId:google.maps.MapTypeId.ROADMAP};
+		    map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
+		    var bps = new Array;
+		    for (var i=0; i<blongom.length; i++) { bps[i] = new google.maps.LatLng(blatgom[i],blongom[i]);};
+		    var flightPath=new google.maps.Polyline({path:bps,strokeColor:"#0000FF",strokeOpacity:0.8,strokeWeight:2});
+		  }
+		  
+		  var marker = new google.maps.Marker({position: point,});		  
+		  var infowindow = new google.maps.InfoWindow({content: 'Latitude: ' + parseFloat(point.lat()).toFixed(6) +'<br>Longitude: ' + parseFloat(point.lng()).toFixed(6)});      	
+        marker.setMap(map);
+        	
+		  google.maps.event.addListener(marker, 'click', function() {infowindow.open(map,marker);});
+		  				       			      			        
+        flightPath.setMap(map);        	
+        	
+        }
+		  else {
+		   if (document.form1.dset.value == "massbay") {
 		  	var myCenter=new google.maps.LatLng(42.1253128052,-70.301940918);
 		   var mapProp = {center:myCenter,zoom:8,mapTypeId:google.maps.MapTypeId.ROADMAP};
 		   map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
@@ -196,6 +229,7 @@
         
         flightPath.setMap(map);
       };
+     };      
       
 		function placeMarker(location) 
 		{  
@@ -204,14 +238,15 @@
 		  var infowindow = new google.maps.InfoWindow({content: 'Latitude: ' + location.lat() + '<br>Longitude: ' + location.lng()});
 		  //infowindow.open(map,marker); 
 		  //google.maps.event.addListener(marker, 'click', function() {infowindow.open(map,marker);});
-		  lat.push(location.lat());
-		  lon.push(location.lng());
+		  //lat.push(location.lat());
+		  //lon.push(location.lng());
 		  google.maps.event.addListener(marker,'click',function() {map.setZoom(10);map.setCenter(marker.getPosition());infowindow.open(map,marker);}); 
 		  
 		};
 		// Zoom to 9 when clicking on marker
 		//
 		google.maps.event.addDomListener(window, 'load', initialize); //document.getElementById("pointinfo").value = point;
+		
 		function addpoint(ln,lt) 
 		{
 		  var ln = lon;
@@ -245,6 +280,10 @@
 		  window.alert('track')
 		}
 		//document.getElementById("side_bar").innerHTML = submit
+		function funreset() {
+		  document.form1.dset.value = "massbay";
+		  initialize();
+		};
 	</script>
 	
 	<script type='text/javascript'>
@@ -256,8 +295,35 @@
 		  if (!lon || !lat) {
 		  window.alert("You didn't enter a point.");
 		  return false	
-		  }
-		}
+		  };
+		  //check track days
+		  var tds = document.form1.tds.value
+		  if (isNaN(tds) || tds.length==0) {
+		   window.alert("Number of days to track: Error! Please enter a number.")
+		  	return false
+		  };
+		  if (document.form1.dset.value == "GOM3" || document.form1.dset.value == "massbay") {
+		  	if (tds<-6 || tds>6) {
+		  	 window.alert("Number of days to track: Error! This model grid only works in last and after 3 days from now.")
+		  	 return false
+		  	};
+		  };
+		  //check start time
+		  var stt = document.form1.stt.value
+		  if (stt) {
+		  	if (!parseFloat(stt)) {
+		  	 window.alert("Start time: Format Error! ")
+		  	 return false
+		   };
+		  };
+	    //check depth
+		  var depth = document.form1.depth.value
+		  if (isNaN(depth) || depth<0) {
+		  	window.alert("Depth: Value Error! Please enter a positive number.")
+		  	return false
+		  };
+		};
+		
 		function checkstt()
 		{
 		  var val = document.form1.stt.value;
@@ -280,24 +346,33 @@
 		  var lat = document.form1.alat.value;
 		  if (lon && lat) {
 		  var point=new google.maps.LatLng(lat,lon);
-		  //window.alert("Time format error.")
-		  var marker = new google.maps.Marker({position: point,});
+		  	     	
+        if (document.form1.dset.value == "massbay") {
+		  	 var myCenter=point;
+		    var mapProp = {center:myCenter,zoom:8,mapTypeId:google.maps.MapTypeId.ROADMAP};
+		    map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
+		    var bps = new Array;
+		    for (var i=0; i<blon.length; i++) {bps[i] = new google.maps.LatLng(blat[i],blon[i]);};
+		    var flightPath=new google.maps.Polyline({path:bps,strokeColor:"#0000FF",strokeOpacity:0.8,strokeWeight:2});
+		  }                
 		  
-		  var infowindow = new google.maps.InfoWindow({
-        content: 'Latitude: ' + parseFloat(point.lat()).toFixed(6) +
-  	     '<br>Longitude: ' + parseFloat(point.lng()).toFixed(6)
-        });
-        var mapProp = {
-  	     center: point,
-        zoom:8,
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-        };
-  
-        var map = new google.maps.Map(document.getElementById("googleMap"),mapProp)
+		  if (document.form1.dset.value == "GOM3" || document.form1.dset.value == "30yr") {
+		  	 var myCenter=point;
+		    var mapProp = {center:myCenter,zoom:5,mapTypeId:google.maps.MapTypeId.ROADMAP};
+		    map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
+		    var bps = new Array;
+		    for (var i=0; i<blongom.length; i++) { bps[i] = new google.maps.LatLng(blatgom[i],blongom[i]);};
+		    var flightPath=new google.maps.Polyline({path:bps,strokeColor:"#0000FF",strokeOpacity:0.8,strokeWeight:2});
+		  }
+		  
+		  var marker = new google.maps.Marker({position: point,});		  
+		  var infowindow = new google.maps.InfoWindow({content: 'Latitude: ' + parseFloat(point.lat()).toFixed(6) +'<br>Longitude: ' + parseFloat(point.lng()).toFixed(6)});      	
         marker.setMap(map);
-        google.maps.event.addListener(marker, 'click', function() {
-        infowindow.open(map,marker);
-        });
+        	
+		  google.maps.event.addListener(marker, 'click', function() {infowindow.open(map,marker);});
+		  				       			      			        
+        flightPath.setMap(map);        	
+        	
         }
 		}
 	</script>
@@ -349,7 +424,7 @@ function myFunction() {
 		         <input type="radio" name="tway" value="backward" />Backward		             
 		           
 		      <li>Start time:</li>	           
-		      	<p id="" >Note: If time is not specified, it will start now.<br />Enter UTC time In Format: 2015-3-25 11:45</p>
+		      	<p id="" >Note: If time is not specified, it will start now.<br />Enter UTC time In Format: <br />2015-3-25 11:45</p>
 		         <input type='text' name='stt' value='' onblur=''>
 		           
 		      <li>Number of days to track:</li>
@@ -360,7 +435,7 @@ function myFunction() {
 		         <input type='hidden' name='lons' value='' >
 		         <input type='hidden' name='lats' value='' >
 		         <input id="bposition" type='submit' name='submit' value='Submit' >
-			      <input id="rposition" type='reset' name='' value='Reset' onclick="initialize()">		        
+			      <input id="rposition" type='reset' name='' value='Reset' onclick="funreset()">		        
 			 </form>
 		</div>
 </div>

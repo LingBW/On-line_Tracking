@@ -111,8 +111,8 @@
 <body>
 	<script type='text/javascript'>
 		var map;
-		var lat = new Array();
-      var lon = new Array();
+		//var lat = new Array();
+      //var lon = new Array();
       var blon = [-70.56523132,-70.55568695,-70.54127502,-70.51769257,-70.4887085,-70.45444489, -70.41751099,-70.37443542,-70.32566833,-70.27555847,-70.22293091,
       -70.17166138,-70.12519073,-70.08081818,-70.03473663,-69.99349976,-69.95652771,-69.92127228,-69.88608551,-69.85466766,-69.82696533,-69.80090332,
       -69.77420807,-69.75162506,-69.72977448,-69.70681,-69.68741608,-69.66733551,-69.64723206,-69.62756348,-69.6092453,-69.59226227,-69.57754517,
@@ -160,6 +160,8 @@
  		36.46731949,36.68853378,36.86878586,37.03686523,37.17869949,37.28518677,37.34851456];
 
 		function initialize(){ 
+		  document.form1.lats.value = null;
+		  document.form1.lons.value = null;
 		  if (document.form1.dset.value == "massbay") {
 		  	var myCenter=new google.maps.LatLng(42.1253128052,-70.301940918);
 		   var mapProp = {center:myCenter,zoom:8,mapTypeId:google.maps.MapTypeId.ROADMAP};
@@ -205,8 +207,20 @@
 		  var infowindow = new google.maps.InfoWindow({content: 'Latitude: ' + location.lat() + '<br>Longitude: ' + location.lng()});
 		  //infowindow.open(map,marker); 
 		  //google.maps.event.addListener(marker, 'click', function() {infowindow.open(map,marker);});
-		  lat.push(location.lat());
-		  lon.push(location.lng());
+		  //lat.push(location.lat());
+		  if (document.form1.lats.value.length==0) {
+		  	var latt = location.lat(); var lonn = location.lng();
+		   document.form1.lats.value = latt.toString();
+		   document.form1.lons.value = lonn.toString();
+		  }
+		  else {
+		  	var latt = location.lat(); var lonn = location.lng();
+		  	var laa = document.form1.lats.value.toString(); var loo = document.form1.lons.value.toString();
+		  	var l1 = laa.concat(",",latt.toString()); var l2 = loo.concat(",",lonn.toString());
+		   document.form1.lats.value = l1;
+		   document.form1.lons.value = l2;
+		  }
+		  //lon.push(location.lng());
 		  google.maps.event.addListener(marker,'click',function() {map.setZoom(10);map.setCenter(marker.getPosition());infowindow.open(map,marker);}); 
 		  
 		};
@@ -214,7 +228,7 @@
 		
 		google.maps.event.addDomListener(window, 'load', initialize); //document.getElementById("pointinfo").value = point;
 		
-		function addpoint(ln,lt) 
+		function addpoint() 
 		{
 		  var ln = lon;
 		  var lt = lat;
@@ -229,23 +243,52 @@
 		    window.alert("You didn't add point. Please click on the map")
 		    return false
 		  }
-		}
+		};
 
-		function reset() 
+		function checkpoint() 
 		{
-		  var lat = new Array();
-        var lon = new Array();
+		  if (document.form1.lats.value.length == 0) {
+		  	window.alert("You didn't add point. Please click on the map")
+		   return false
+		  };
 		  //initialize();
-		}
+		  var tds = document.form1.tds.value
+		  if (isNaN(tds) || tds.length==0) {
+		   window.alert("Number of days to track: Error! Please enter a number.")
+		  	return false
+		  };
+		  if (document.form1.dset.value == "GOM3" || document.form1.dset.value == "massbay") {
+		  	if (tds<-6 || tds>6) {
+		  	 window.alert("Number of days to track: Error! This model grid only works in last and after 3 days from now.")
+		  	 return false
+		  	};
+		  };
+		  //check start time
+		  var stt = document.form1.stt.value
+		  if (stt) {
+		  	if (!parseFloat(stt)) {
+		  	 window.alert("Start time: Format Error! ")
+		  	 return false
+		   };
+		  };
+	    //check depth
+		  var depth = document.form1.depth.value
+		  if (isNaN(depth) || depth<0) {
+		  	window.alert("Depth: Value Error! Please enter a positive number.")
+		  	return false
+		  };
+		};
 		
-		function track() 
+		function repoint() 
 		{
-		  var ln = lon;
-		  var lt = lat;
-		  //document.write('lat,lon'+lat+','+lon)
-		  window.alert('track')
+		  document.form1.lats.value = null;
+		  document.form1.lons.value = null;
 		}
 		//document.getElementById("side_bar").innerHTML = submit
+		function funreset() {
+		  document.form1.dset.value = "massbay";
+		  initialize();
+		};
 	</script>
 	
 	<script type='text/javascript'>
@@ -257,14 +300,15 @@
 		  var ls = val.split('/');
 		  if (val){if (ls.length!=5){window.alert("Time format error.");document.form1.stt.value=null;};}
 		}
-		function checkedt()
-		{
+		function checkedt(){
 		  var val = document.form1.edt.value;
 		  //var len = document.form1.edt.value.length;
 		  //if (len==0){window.alert("You didn't enter the time.");}
 		  var ls = val.split('/');
 		  if (val){if (ls.length!=5){window.alert("Time format error.");document.form1.edt.value=null;};}
 		}
+		
+		
 	</script>
 	
 <div id="header">
@@ -295,7 +339,7 @@ function myFunction() {
 		 
 		 <div id="optionbar">
 		 	<h4>Simulation Track</h4>
-		   <form action='/cgi-bin/ioos/track/simulation-track-CGI.py' method='POST' name='form1' onsubmit='return addpoint()'> 			        		        
+		   <form action='/cgi-bin/ioos/track/simulation-track-CGI.py' method='POST' name='form1' onsubmit='return checkpoint()'> 			        		        
 				<ul class="ul">		        
 			   <li>Model grid:</li> 
 			   	<select name="dset" onchange="initialize()">
@@ -312,7 +356,7 @@ function myFunction() {
 		         <input type="radio" name="tway" value="backward" />Backward		             
 		           
 		      <li>Start time:</li>	           
-		      	<p id="" >Note: If time is not specified, it will start now.<br />Enter UTC time In Format: 2015-3-25 11:45</p>
+		      	<p id="" >Note: If time is not specified, it will start now.<br />Enter UTC time In Format: <br />2015-3-25 11:45</p>
 		         <input type='text' name='stt' value='' onblur=''>
 		           
 		      <li>Number of days to track:</li>
@@ -323,7 +367,7 @@ function myFunction() {
 		         <input type='hidden' name='lons' value='' >
 		         <input type='hidden' name='lats' value='' >
 		         <input id="bposition" type='submit' name='submit' value='Submit' >
-			      <input id="rposition" type='reset' name='' value='Reset' onclick="" >		        
+			      <input id="rposition" type='reset' name='' value='Reset' onclick="funreset()" >		        
 			 </form>
 		</div>
 </div>

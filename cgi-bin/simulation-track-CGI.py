@@ -32,7 +32,7 @@ try:
         st_lat.append(float(i[1]))
         st_lon.append(float(i[0]))
 except:
-    print '<h2>"No start points."</h2>'
+    print '<h2>"No start points.%s"</h2>'%lons
     print '</head></html>'
     sys.exit()
 
@@ -64,7 +64,7 @@ if MODEL=='FVCOM':
     try:
         url_fvcom = get_obj.get_url(start_time,end_time)
     except:
-        print 'window.alert("Model not works this duration.");'
+        print '<h2>"Start time: Error! Model not works this duration."</h2>'
         print '</head></html>'
         sys.exit()
     bpoints = get_obj.get_data(url_fvcom)        
@@ -88,7 +88,7 @@ print """
     a:hover {color: ;}
     a:active {color: #900;}
     body {
-        background-image: url(http://comet.nefsc.noaa.gov/ioos/track/r20150412.jpg);
+        background-image: url(http://127.0.0.1:8000/image/20150412.jpg);
         background-repeat: repeat;
         background-position: top center;
         background-attachment: scroll;
@@ -138,13 +138,13 @@ print """
 <body onunload="GUnload()">
 
 <script type="text/javascript">
-var myCenter=new google.maps.LatLng(%s,%s);//41.8,-70.3
+var myCenter=new google.maps.LatLng(%s,%s);
 
 function initialize()
 {
   var mapProp = {
   center: myCenter,
-  zoom:9,
+  zoom:7,
   mapTypeId: google.maps.MapTypeId.ROADMAP
   };
   
@@ -168,11 +168,13 @@ function setmarker(tlon,tlat) {
   });
   
   google.maps.event.addListener(marker, 'click', function() {
+  map.setZoom(10);map.setCenter(marker.getPosition());
   infowindow.open(map,marker);
   });
 }
 """%(st_lat[0],st_lon[0])
 
+####### polyline #########
 for i in range(stp_num):
     print 'setmarker(%s,%s)'%(st_lat[i],st_lon[i])
     print 'var pts=[]'
@@ -186,6 +188,23 @@ for i in range(stp_num):
         strokeWeight:4
         });
     ptsPath.setMap(map);"""%colors[i%9]
+
+######## boundary ##########
+
+"""print 'var bts=[]'
+for j in xrange(1,124):
+    print 'bts[%d] = new google.maps.LatLng(%s,%s);'%(j-1,bpoints[j][1],bpoints[j][0])
+print var boundary=new google.maps.Polygon({
+  path:bts,
+  strokeColor:"#0000FF",
+  strokeOpacity:0.8,
+  strokeWeight:0,
+  fillColor:"#0000FF",
+  fillOpacity:0.4
+  });
+
+boundary.setMap(map);
+"""
 
 print """
 }

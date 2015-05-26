@@ -245,6 +245,10 @@
 		  window.alert('track')
 		}
 		//document.getElementById("side_bar").innerHTML = submit
+		function funreset() {
+		  document.form1.dset.value = "massbay";
+		  initialize();
+		};
 	</script>
 	
 	<script type='text/javascript'>
@@ -256,7 +260,27 @@
 		  if (!did || !dty) {
 		  window.alert("You didn't enter a drifter.");
 		  return false	
-		  }
+		  };
+		  
+		  //check track days
+		  var tds = document.form1.tds.value
+		  if (isNaN(tds) || tds.length==0) {
+		   window.alert("Number of days to track: Error! Please enter a number.")
+		  	return false
+		  };
+		  if (document.form1.dset.value == "GOM3" || document.form1.dset.value == "massbay") {
+		  	if (tds<-6 || tds>6) {
+		  	 window.alert("Number of days to track: Error! This model grid only works in last and after 3 days from now.")
+		  	 return false
+		  	};
+		  };
+		  
+		  //check depth
+		  var depth = document.form1.depth.value
+		  if (isNaN(depth) || depth<0) {
+		  	window.alert("Depth: Value Error! Please enter a positive number.")
+		  	return false
+		  };
 		}
 		function checkstt()
 		{
@@ -313,27 +337,29 @@ function myFunction() {
 			   	<select name="dty">
 				   <option value="drift_su_2014_1.dat" selected="selected">drift_su_2015_1.dat</option>
 				   <option value="drift_ssnsc_2015_1.dat">drift_ssnsc_2015_1.dat</option>
+				   <option value="drift_emsp_2015_1.dat">drift_emsp_2015_1.dat</option>
+				   <option value="drift_gomi_2015_1.dat">drift_gomi_2015_1.dat</option>
 				   </select>		    	
 		    	
 		    	<li >Drifter ID:</li>
 		      	<input type='text' name='did' value='' onblur=''>
-		      	
-		      <li>Depth(m):</li>
-			   	<input type='text' name='depth' size='2' value='1' onblur='' maxlength="4">
-		      <li >Number of days to track:</li>
-		      	<input type='text' name='tds' size='2' value='1' onblur='' maxlength="4">
 		      <li >Model grid:</li>
 		      	<select name="dset" onchange="initialize()">
 				   <option value="massbay" selected="selected">massbay</option>
 				   <option value="GOM3">GOM3</option>
-		         </select>
+		         </select>	
+		      <li>Depth(m):</li>
+			   	<input type='text' name='depth' size='2' value='1' onblur='' maxlength="4">
+   
 		      <li >Track direction:</li>
 		      	<input type="radio" name="tway" value="forward" checked="checked" > Forward<br />
 		         <input type="radio" name="tway" value="backward" /> Backward
+		      <li >Number of days to track:</li>
+		      	<input type='text' name='tds' size='2' value='1' onblur='' maxlength="4">
 		      </ul>
 		         
 		      <input id="bposition" type='submit' name='submit' value='Submit' >
-			   <input id="rposition" type='reset' name='' value='Reset' onclick="initialize()" >			   
+			   <input id="rposition" type='reset' name='' value='Reset' onclick="funreset()" >			   
 		    </form>
 		    
 		    <p id="">See more Drifter track <a href="http://www.nefsc.noaa.gov/drifter/drift_X.html" >click here</a></p>	    

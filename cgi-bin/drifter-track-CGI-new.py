@@ -29,15 +29,20 @@ INPUT_DATA = dty
 start_time = None
 drifter_days = None
 
-drifter = get_drifter(drifter_ID, INPUT_DATA)
-dr_points = drifter.get_track(start_time,drifter_days)
+try:
+    drifter = get_drifter(drifter_ID, INPUT_DATA)
+    dr_points = drifter.get_track(start_time,drifter_days)
+except:
+    print '<h2>"Drifter ID or Data Type Error."</h2>'
+    print '</head></html>'
+    sys.exit()
 
 if MODEL=='FVCOM':
     get_obj =  get_fvcom(GRID)
     try:
         url_fvcom = get_obj.get_url(dr_points['time'][-1],dr_points['time'][-1]+timedelta(forecast_days))
     except:
-        print '<h2>"Model not works this duration."</h2>'
+        print '<h2>"Start time: Error! The last updated time of drifter not works model duration."</h2>'
         print '</head></html>'
         sys.exit()
     else:
@@ -52,7 +57,7 @@ print """
     a:hover {color: ;}
     a:active {color: #900;}
     body {
-        background-image: url(http://comet.nefsc.noaa.gov/ioos/track/r20150412.jpg);
+        background-image: url(http://127.0.0.1:8000/image/20150412.jpg);
         background-repeat: repeat;
         background-position: top center;
         background-attachment: scroll;
