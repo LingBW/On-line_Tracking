@@ -36,20 +36,23 @@ except:
     print '</head></html>'
     sys.exit()
 
+utcti = datetime.now(pytz.UTC); utct = utcti.strftime('%H')
+locti = datetime.now(); loct = locti.strftime('%H')
+ditnu = int(utct)-int(loct)
 try:
     if not stt:
         start_time = datetime.now(pytz.UTC)#edtl = (edt[0],edt[1],edt[2],edt[3],edt[4])
     else:
-        stime = parse(stt) #datetime(2015,2,10,12,0,0,0,pytz.UTC
-        start_time = pytz.utc.localize(stime)
+        stime = parse(stt) #datetime(2015,2,10,12,0,0,0,pytz.UTC        
+        start_time = pytz.utc.localize(stime)+timedelta(hours=ditnu)
 except:
     print '<h2>"Time format error."</h2>'  
     print '</head></html>'
     sys.exit() 
 stp_num = len(st_lat)
 
-MODEL = 'FVCOM'      # 'FVCOM', 'ROMS'
-GRID = dset     # Apply to FVCOM. '30yr', 'massbaya', 'GOM3a', 'GOM3' or 'massbay'
+MODEL = dset      # 'FVCOM', 'ROMS'
+GRID = ['massbay','GOM3','30yr']  
 forecast_days = float(tds)      #MODEL track time(days) 
 depth = float(dep)*(-1)   
 end_time = start_time + timedelta(forecast_days)
@@ -58,128 +61,147 @@ if track_way=='backward':
     end_time = start_time 
     start_time = end_time - timedelta(forecast_days)  #'''
 
+stim = (start_time-timedelta(hours=ditnu)).strftime('%D %H:%M')
+etim = (end_time-timedelta(hours=ditnu)).strftime('%D %H:%M')
+curtime = pytz.utc.localize(datetime.now().replace(hour=0,minute=0,second=0,microsecond=0))
+mst = curtime - timedelta(3); met = curtime + timedelta(3)
+mstt = mst.strftime('%D %H:%M'); mett = met.strftime('%D %H:%M')
 lon_set = [[]]*stp_num; lat_set = [[]]*stp_num
-if MODEL=='FVCOM':
-    get_obj = get_fvcom(GRID)
+if MODEL in GRID:
+    get_obj = get_fvcom(MODEL)
     try:
         url_fvcom = get_obj.get_url(start_time,end_time)
     except:
-        print '<h2>"Start time: Error! Model not works this duration."</h2>'
+        if MODEL == '30yr':
+            print '<h2>"Start time: Error! Model(30yr) only works from 01/01/1978 to 01/01/2014."</h2>'
+        else: 
+            print '<h2>Start time: Error! Model(%s) only works the past and future 3 days(%s - %s). <br>Tips: check step 5 or 6.</h2>'%(MODEL,mstt,mett)
         print '</head></html>'
         sys.exit()
     bpoints = get_obj.get_data(url_fvcom)        
     for i in range(stp_num):
         point = get_obj.get_track(st_lon[i],st_lat[i],depth,track_way)
+        if len(point['lon'])==1: 
+            print '<script type="text/javascript">window.alert("This point is out of the Model(%s) Zone. Tips: change the Model(step 2), try again.")</script>'%MODEL
         lon_set[i] = point['lon']; lat_set[i] = point['lat']        
         
 if MODEL=='ROMS': 
     get_obj = get_roms()
-    url_roms = get_obj.get_url(start_time,end_time)
+    try:
+        url_roms = get_obj.get_url(start_time,end_time)
+    except:
+        print '<h2>"Time Error! Track time out of Model time horizon."</h2></head></html>' 
+        sys.exit()
     lon_rho,lat_rho,u,v = get_obj.get_data(url_roms)
     for i in range(stp_num):
         point = get_obj.get_track(st_lon[i],st_lat[i],lon_rho,lat_rho,u,v,track_way)
-        lon_set[i] = point['lon']; lat_set[i] = point['lat']       
+        if len(point['lon'])==1: 
+            print '<script type="text/javascript">window.alert("This point is out of the Model(%s) Zone. Tips: change the Model(step 2), try again.")</script>'%MODEL
+        lon_set[i] = point['lon']; lat_set[i] = point['lat']
+        
         
 
 print """
 <style type="text/css">
-    a:link {}
-    a:visited {color: ;}
-    a:hover {color: ;}
-    a:active {color: #900;}
-    body {
-        background-image: url(http://127.0.0.1:8000/image/20150412.jpg);
-        background-repeat: repeat;
-        background-position: top center;
-        background-attachment: scroll;
-    }
-    #header {
-        width: auto;
-        height: 70px;
-        margin: 0 auto;
-        border: ;
-    }
-    #container {
-        width: 1024px;
-        height: 600px;
-        margin: 0 auto;
-        border: ;
-    }
-    #googleMap {
-        width: 800px;
-        height: 596px;
-        float: left;
-        border: black 2px solid;
-    }
-    #sidebar {
-        width: 200px;
-        height: 580px;
-        border: ;
-        float: left;
-        background: ;
-        overflow: auto;
-        padding: 10px;
-        text-align: center;      
-    }
-    #ad {   
-        text-align: center;   
-        font-size: 20px;
-        vertical-align: middle;
-        text-decoration: none;
-        padding: 4px 10px;
-        border: 1px solid;
-        background: #eeddbb;
-        margin: auto;
-    }
-
+body {
+    background-image: url(http://comet.nefsc.noaa.gov/ioos/track/20150412.jpg);
+    background-repeat: repeat;
+    background-position: top center;
+    background-attachment: scroll;
+}
+#header {
+    background-color: blue;
+    color:white;
+    text-align:center;
+    padding: 1px;
+    width: 958px;
+    height: ;
+    margin: 0 auto;
+}
+#googleMap {
+    width: 960px;
+    height: 500px;
+    margin: 0 auto;
+    border: ;
+}
+#footer {
+	background-color: blue;
+	color:white;
+	clear:both;
+	text-align:center;
+	padding: 5px;
+	width: 950px;
+	height: ;
+	margin: auto;
+} 
 </style>
+
 </head>
 
 <body onunload="GUnload()">
 
 <script type="text/javascript">
 var myCenter=new google.maps.LatLng(%s,%s);
-
-function initialize()
-{
-  var mapProp = {
-  center: myCenter,
-  zoom:7,
-  mapTypeId: google.maps.MapTypeId.ROADMAP
-  };
+var stim = "%s";
+var etim = "%s";
+function initialize() {
+    var mapProp = {
+        center: myCenter,
+        zoom:7,
+        mapTypeId: google.maps.MapTypeId.SATELLITE
+    };
   
-  var map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
-
-
-function setmarker(tlon,tlat) {
-  //Show a point(lon,lat) on the map, and add an event click the marker show the point info.
-  var pmarker = new google.maps.LatLng(tlon,tlat);
-  var marker = new google.maps.Marker({
-  position: pmarker,
-  //animation:google.maps.Animation.BOUNCE
-  //title:'Click to zoom'
-  });
-  
-  marker.setMap(map);
-  
-  var infowindow = new google.maps.InfoWindow({
-  content: 'Latitude: ' + pmarker.lat() +
-  '<br>Longitude: ' + pmarker.lng()
-  });
-  
-  google.maps.event.addListener(marker, 'click', function() {
-  map.setZoom(10);map.setCenter(marker.getPosition());
-  infowindow.open(map,marker);
-  });
-}
-"""%(st_lat[0],st_lon[0])
+    var map = new google.maps.Map(document.getElementById("googleMap"),mapProp);
+    
+    function startmarker(tlon,tlat) {
+        //Show a point(lon,lat) on the map, and add an event click the marker show the point info.
+        var pmarker = new google.maps.LatLng(tlon,tlat);
+        var marker = new google.maps.Marker({ 
+	        position: pmarker,
+	        //animation:google.maps.Animation.BOUNCE
+	        title:'Start point',
+	        icon: 'http://comet.nefsc.noaa.gov/ioos/track/startmarker.png'
+        	});     
+        marker.setMap(map);   
+        var infowindow = new google.maps.InfoWindow({
+            content: 'Latitude: ' + parseFloat(pmarker.lat()).toFixed(6) +'<br>Longitude: ' + parseFloat(pmarker.lng()).toFixed(6)+'<br>StartTime: '+stim+' EDT'});
+          
+        google.maps.event.addListener(marker, 'click', function() {
+            map.setZoom(10);
+            map.setCenter(marker.getPosition());
+            infowindow.open(map,marker);
+        	});
+    	}
+    function endmarker(tlon,tlat) {
+        //Show a point(lon,lat) on the map, and add an event click the marker show the point info.
+        var pmarker = new google.maps.LatLng(tlon,tlat);
+        var marker = new google.maps.Marker({ 
+	        position: pmarker,
+	        //animation:google.maps.Animation.BOUNCE
+	        title:'End point',
+	        icon: 'http://comet.nefsc.noaa.gov/ioos/track/endmarker.png'
+        	});     
+        marker.setMap(map);   
+        var infowindow = new google.maps.InfoWindow({
+            content: 'Latitude: ' + parseFloat(pmarker.lat()).toFixed(6) +'<br>Longitude: ' + parseFloat(pmarker.lng()).toFixed(6)+'<br>EndTime: '+etim+' EDT'});
+          
+        google.maps.event.addListener(marker, 'click', function() {
+            map.setZoom(10);
+            map.setCenter(marker.getPosition());
+            infowindow.open(map,marker);
+        	});
+    	}"""%(st_lat[0],st_lon[0],stim,etim)
 
 ####### polyline #########
 for i in range(stp_num):
-    print 'setmarker(%s,%s)'%(st_lat[i],st_lon[i])
+    # plot start markers
+    print 'startmarker(%s,%s)'%(st_lat[i],st_lon[i])
+    # plot end markers
+    print 'endmarker(%s,%s)'%(lat_set[i][-1],lon_set[i][-1])
     print 'var pts=[]'
     for j in xrange(len(lon_set[i])):
         print 'pts[%d] = new google.maps.LatLng(%s,%s);'%(j,lat_set[i][j],lon_set[i][j])
+    # plot line
     print """
     var ptsPath=new google.maps.Polyline({
         path:pts,
@@ -189,34 +211,16 @@ for i in range(stp_num):
         });
     ptsPath.setMap(map);"""%colors[i%9]
 
-######## boundary ##########
-
-"""print 'var bts=[]'
-for j in xrange(1,124):
-    print 'bts[%d] = new google.maps.LatLng(%s,%s);'%(j-1,bpoints[j][1],bpoints[j][0])
-print var boundary=new google.maps.Polygon({
-  path:bts,
-  strokeColor:"#0000FF",
-  strokeOpacity:0.8,
-  strokeWeight:0,
-  fillColor:"#0000FF",
-  fillOpacity:0.4
-  });
-
-boundary.setMap(map);
-"""
-
 print """
 }
 google.maps.event.addDomListener(window, 'load', initialize);
 </script>
    
-<div id="header"><h2 align="center">%s track %s days.</h2></div>
+<div id="header"><h2>Model: %s, %s track %s days.</h2></div>
 
-<div id="container">
-    <div id="googleMap" ></div>
-    <div id="sidebar" ><a id="ad" href="http://comet.nefsc.noaa.gov/ioos/track/index.html">Track again</a></div>
-</div>
-"""%(track_way,tds)
+<div id="googleMap" ></div>
+
+<div id="footer" ><a href="http://comet.nefsc.noaa.gov/ioos/track/index.html"><input type="button" value="Track again" /></a></div>
+"""%(MODEL,track_way,tds)
 
 print '</script></body></html>'

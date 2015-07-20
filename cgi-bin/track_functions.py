@@ -1,4 +1,4 @@
-#!/usr/bin/env /anaconda/bin/python
+#!/usr/bin/env python
 import cgitb
 cgitb.enable()
 #import sys
@@ -300,9 +300,9 @@ class get_fvcom(track):
         self.modelname = mod
     def nearest_point_index(self, lon, lat, lons, lats,rad):  #,num=4
         '''
-        Return the index of the nearest rho point.
+        Return the nearest point(lonp,latp) and distance to origin point(lon,lat).
         lon, lat: the coordinate of start point, float
-        lats, lons: the coordinate of points to be calculated.
+        latp, lonp: the coordinate of points to be calculated.
         '''
         def bbox2ij(lon, lat, lons, lats, rad):  
             
@@ -321,6 +321,7 @@ class get_fvcom(track):
             
             if not index[0].tolist():          # bbox covers no area
                 #print 'This point is out of the model area.'
+                #print '<h2>"This point is out of the model area."</h2>'
                 raise Exception()
                 
             else:
@@ -340,7 +341,7 @@ class get_fvcom(track):
             p = dis_set.index(dis)
             lonp = lons[p]; latp = lats[p]
             return lonp,latp,dis       
-        index = bbox2ij(lon, lat, lons, lats,0.1)
+        index = bbox2ij(lon, lat, lons, lats,rad)
         lon_covered = lons[index];  lat_covered = lats[index]       
         lonp,latp,distance = min_distance(lon,lat,lon_covered,lat_covered)
         #index1 = np.where(lons==lonp)
@@ -366,8 +367,10 @@ class get_fvcom(track):
             u[{0}:1:{1}][0:1:39][0:1:95721],v[{0}:1:{1}][0:1:39][0:1:95721],zeta[{0}:1:{1}][0:1:51215]'''
             current_time = pytz.utc.localize(datetime.now().replace(hour=0,minute=0,second=0,microsecond=0))
             period = starttime-(current_time-timedelta(days=3))
-            if period.total_seconds()<0:
+            if abs((starttime-current_time).total_seconds())>259200 or abs((endtime-current_time).total_seconds())>259200: #24*3600*3
                 raise IndexError('GOM3 only works between 3days before and 3daysafter.')
+            '''if period.total_seconds()<0:
+                raise IndexError('GOM3 only works between 3days before and 3daysafter.')#'''
             index1 = int(round(period.total_seconds()/3600))
             index2 = index1 + self.hours
             self.url = urll.format(index1, index2)
@@ -381,8 +384,8 @@ class get_fvcom(track):
             current_time = pytz.utc.localize(datetime.now().replace(hour=0,minute=0,second=0,microsecond=0))
             #print 'current_time',current_time
             period = starttime-(current_time-timedelta(days=3))
-            if period.total_seconds()<0:
-                raise IndexError('massbay only works between 3days before and 3days after.')
+            if abs((starttime-current_time).total_seconds())>259200 or abs((endtime-current_time).total_seconds())>259200: #24*3600*3
+                raise IndexError('GOM3 only works between 3days before and 3daysafter.')
             index1 = int(round(period.total_seconds()/3600))
             index2 = index1 + self.hours
             self.url = urll.format(index1, index2)#'''
@@ -412,6 +415,8 @@ class get_fvcom(track):
             siglay[0:1:44][0:1:48450],nv[0:1:2][0:1:90414]"""
             urll = """http://www.smast.umassd.edu:8080/thredds/dodsC/fvcom/hindcasts/30yr_gom3?u[{0}:1:{1}][0:1:44][0:1:90414],
             v[{0}:1:{1}][0:1:44][0:1:90414],zeta[{0}:1:{1}][0:1:48450]"""
+            if (starttime-datetime(2014,1,1,0,0,0,0,pytz.UTC)).total_seconds()>0 or (endtime-datetime(2014,1,1,0,0,0,0,pytz.UTC)).total_seconds()>0:
+                raise IndexError('"30yr" only works between 1988-2013.')
             index1 = int(round((starttime-datetime(1977,12,31,22,58,4,0,pytz.UTC)).total_seconds()/3600))
             index2 = index1 + self.hours
             self.url = urll.format(index1, index2)
@@ -492,7 +497,29 @@ class get_fvcom(track):
             #codes = [Path.MOVETO,Path.LINETO,Path.LINETO]
             path = Path(pa)#,codes
             return path
-            
+    
+    def uvt(self,u1,v1,u2,v2):
+        t = 2
+        a=0; b=0
+        if u1==u2:
+            a = u1
+        else:
+            ut = np.arange(u1,u2,float(u2-u1)/t)
+            for i in ut:
+                a += i
+            a = a/t  
+        
+        if v1==v2:
+            b = v1
+        else:
+            c = float(v2-v1)/t
+            vt = np.arange(v1,v2,c)
+            for i in vt:
+                b += i
+            b = b/t
+               
+        return a, b
+        
     def get_track(self,lon,lat,depth,track_way): #,b_index,nvdepth, 
         '''
         Get forecast nodes start at lon,lat
@@ -506,30 +533,39 @@ class get_fvcom(track):
         lonl,latl = self.shrink_data(lon,lat,self.lonc,self.latc)
         lonk,latk = self.shrink_data(lon,lat,self.lons,self.lats)
         try:
-            lonp,latp,distance = self.nearest_point_index(lon, lat, lonl, latl,0.04)
-            lonn,latn,ds = self.nearest_point_index(lon,lat,lonk,latk,0.06)        
-            index1 = np.where(self.lonc==lonp)
-            index2 = np.where(self.latc==latp)
-            elementindex = np.intersect1d(index1,index2)
-            index3 = np.where(self.lons==lonn)
-            index4 = np.where(self.lats==latn)
-            nodeindex = np.intersect1d(index3,index4)
-            ################## boundary 1 ####################            
-            
-            pa = self.eline_path(lon,lat)
-            
-            if track_way=='backward' : # backwards case
-                waterdepth = self.h[nodeindex]+zeta[-1,nodeindex]
-            else:
-                waterdepth = self.h[nodeindex]+zeta[0,nodeindex]
-            if waterdepth<(abs(depth)): 
-                #print 'This point is too shallow.Less than %d meter.'%abs(depth)
-                raise Exception()
-            depth_total = self.siglay[:,nodeindex]*waterdepth  
-            layer = np.argmin(abs(depth_total-depth))
+            if self.modelname == "GOM3" or self.modelname == "30yr":
+                lonp,latp,distance = self.nearest_point_index(lon, lat, lonl, latl,0.2)
+                lonn,latn,ds = self.nearest_point_index(lon,lat,lonk,latk,0.3)
+                
+            if self.modelname == "massbay":
+                lonp,latp,distance = self.nearest_point_index(lon, lat, lonl, latl,0.03)
+                lonn,latn,ds = self.nearest_point_index(lon,lat,lonk,latk,0.05)
         except:
-            #print 'window.alert("This point is out of the model area.")</script><script type="text/javascript">'
-            return nodes  
+            #print '<script type="text/javascript">window.alert("Start point is out of the Model(%s) grid.")</script>'%self.modelname            
+            return nodes
+            
+        index1 = np.where(self.lonc==lonp)
+        index2 = np.where(self.latc==latp)
+        elementindex = np.intersect1d(index1,index2)
+        index3 = np.where(self.lons==lonn)
+        index4 = np.where(self.lats==latn)
+        nodeindex = np.intersect1d(index3,index4)
+        ################## boundary 1 ####################            
+        
+        pa = self.eline_path(lon,lat)
+        
+        if track_way=='backward' : # backwards case
+            waterdepth = self.h[nodeindex]+zeta[-1,nodeindex]
+        else:
+            waterdepth = self.h[nodeindex]+zeta[0,nodeindex]
+        if waterdepth<(abs(depth)): 
+            #print 'This point is too shallow.Less than %d meter.'
+            print '<script type="text/javascript">window.alert("Start point is too shallow. Less than %d meter.")</script>'%abs(depth)
+            #raise Exception()
+            return nodes
+        depth_total = self.siglay[:,nodeindex]*waterdepth  
+        layer = np.argmin(abs(depth_total-depth))
+        
             
         t = abs(self.hours)
                  
@@ -538,11 +574,13 @@ class get_fvcom(track):
                 #print 'layer,lon,lat,i',layer,lon,lat,i
                 lonl,latl = self.shrink_data(lon,lat,self.lonc,self.latc)
                 lonk,latk = self.shrink_data(lon,lat,self.lons,self.lats)
-            if track_way=='backward': # backwards case
-                u_t = u[t-i,layer,elementindex][0]*(-1)
-                v_t = v[t-i,layer,elementindex][0]*(-1)
+            if track_way=='backward' : # backwards case
+                u_t1 = u[t-i,layer,elementindex][0]*(-1); v_t1 = v[t-i,layer,elementindex][0]*(-1)
+                u_t2 = u[t-i-1,layer,elementindex][0]*(-1); v_t2 = v[t-i-1,layer,elementindex][0]*(-1)
             else:
-                u_t = u[i,layer,elementindex][0]; v_t = v[i,layer,elementindex][0]          
+                u_t1 = u[i,layer,elementindex][0]; v_t1 = v[i,layer,elementindex][0]
+                u_t2 = u[i+1,layer,elementindex][0]; v_t2 = v[i+1,layer,elementindex][0]
+            u_t,v_t = self.uvt(u_t1,v_t1,u_t2,v_t2)          
             '''if u_t==0 and v_t==0: #There is no water
                 print 'Sorry, hits the land,u,v==0'
                 return nodes,1 #'''
@@ -567,8 +605,12 @@ class get_fvcom(track):
             
             if i!=(t-1):                
                 try:
-                    lonp,latp,distance = self.nearest_point_index(lon, lat, lonl, latl,0.04)
-                    lonn,latn,ds = self.nearest_point_index(lon,lat,lonk,latk,0.06)
+                    if self.modelname == "GOM3" or self.modelname == "30yr":
+                        lonp,latp,distance = self.nearest_point_index(lon, lat, lonl, latl,0.2)
+                        lonn,latn,ds = self.nearest_point_index(lon,lat,lonk,latk,0.3)
+                    if self.modelname == "massbay":
+                        lonp,latp,distance = self.nearest_point_index(lon, lat, lonl, latl,0.03)
+                        lonn,latn,ds = self.nearest_point_index(lon,lat,lonk,latk,0.05)
                     index1 = np.where(self.lonc==lonp)
                     index2 = np.where(self.latc==latp)
                     elementindex = np.intersect1d(index1,index2);#print 'elementindex',elementindex
