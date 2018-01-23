@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env /anaconda/bin/python
 import cgitb
 cgitb.enable()
 import cgi,sys
@@ -6,6 +6,9 @@ import cgi,sys
 from dateutil.parser import parse
 from datetime import datetime, timedelta
 from track_functions import get_fvcom,get_roms
+
+
+st_run_time = datetime.now() # Caculate execution time with en_run_time
 
 print """
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -80,36 +83,30 @@ etim = eloctim.strftime('%D %H:%M')
 lon_set = [[]]*stp_num; lat_set = [[]]*stp_num  #collect model points
 if MODEL in GRID:
     get_obj = get_fvcom(MODEL)
-    if (MODEL == 'massbay' or MODEL == 'GOM3') and depth < 2 :
-        bpoints = get_obj.sf_get_data(start_time,end_time)
-        for i in range(stp_num):
-            point = get_obj.sf_get_track(st_lon[i],st_lat[i],track_way)
-            if len(point['lon'])==1: 
-                print '<script type="text/javascript">window.alert("This point on the land.")</script>'
-            lon_set[i] = point['lon']; lat_set[i] = point['lat']
+    
+    try:
+        url_fvcom,fmtime,emtime = get_obj.get_data(start_time,end_time)
+    except:
+        print '<h2>Model(FVCOM:%s) is unavailable temporarily. Try to use another model.</h2>'%(MODEL)
+        print '</head></html>'
+        sys.exit()
+    # Check the time duration.
+    if url_fvcom=='error':
+        fmodtime = fmtime - timedelta(hours=ditnu)
+        emodtime = emtime - timedelta(hours=ditnu)
+        #print fmodtime,emodtime
+        mstt = fmodtime.strftime('%m/%d/%Y %H:%M')
+        mett = emodtime.strftime('%m/%d/%Y %H:%M')
+        print '<h2>Time: Error! Model(FVCOM:%s) only works between %s with %s. <br>Tips: check step 5 or 6.</h2>'%(MODEL,mstt,mett)
+        print '<h3><font color="red">Your tracking time is from %s to %s.</font></h3>'%(start_time.strftime('%m/%d/%Y %H:%M'),end_time.strftime('%m/%d/%Y %H:%M'))
+        print '</head></html>'
+        sys.exit()
 
-    else:
-        try:
-            url_fvcom,fmtime,emtime = get_obj.get_data(start_time,end_time)
-        except:
-            print '<h2>Model(FVCOM:%s) is unavailable temporarily.Try to use another model.</h2>'%(MODEL)
-            print '</head></html>'
-            sys.exit()
-        if url_fvcom=='error':
-            fmodtime = fmtime - timedelta(hours=ditnu)
-            emodtime = emtime - timedelta(hours=ditnu)
-            #print fmodtime,emodtime
-            mstt = fmodtime.strftime('%m/%d/%Y %H:%M')
-            mett = emodtime.strftime('%m/%d/%Y %H:%M')
-            print '<h2>Time: Error! Model(FVCOM:%s) only works between %s with %s. <br>Tips: check step 5 or 6.</h2>'%(MODEL,mstt,mett)
-            print '</head></html>'
-            sys.exit()
-        #bpoints = get_obj.get_data(url_fvcom)        
-        for i in range(stp_num):
-            point = get_obj.get_track(st_lon[i],st_lat[i],depth,track_way)
-            if len(point['lon'])==1: 
-                print '<script type="text/javascript">window.alert("This point on the land.")</script>'
-            lon_set[i] = point['lon']; lat_set[i] = point['lat']        
+    for i in range(stp_num):
+        point = get_obj.get_track(st_lon[i],st_lat[i],depth,track_way)
+        #if len(point['lon'])==1: 
+            #print '<script type="text/javascript">window.alert("This point on the land.")</script>'
+        lon_set[i] = point['lon']; lat_set[i] = point['lat']        
         
 if MODEL=='ROMS': 
     get_obj = get_roms()
@@ -125,25 +122,45 @@ if MODEL=='ROMS':
         mstt = fmodtime.strftime('%m/%d/%Y %H:%M')
         mett = emodtime.strftime('%m/%d/%Y %H:%M')
         print '<h2>Time: Error! Model(%s) only works between %s with %s. <br>Tips: check step 5 or 6.</h2>'%(MODEL,mstt,mett)
+        print '<h3><font color="red">Your tracking time is from %s to %s.</font></h3>'%(start_time.strftime('%m/%d/%Y %H:%M'),end_time.strftime('%m/%d/%Y %H:%M'))
         print '</head></html>'
         sys.exit()
-    if depth < 2:
-        for i in range(stp_num):
-            point = get_obj.sf_get_track(st_lon[i],st_lat[i],track_way)
-            if len(point['lon'])==1: 
-                print '<script type="text/javascript">window.alert("The point on the land.")</script>'
-            lon_set[i] = point['lon']; lat_set[i] = point['lat']
-    else:
-        for i in range(stp_num):
-            point = get_obj.get_track(st_lon[i],st_lat[i],depth,track_way)
-            if len(point['lon'])==1: 
-                print '<script type="text/javascript">window.alert("The point on the land.")</script>'
-            lon_set[i] = point['lon']; lat_set[i] = point['lat']
+
+    for i in range(stp_num):
+        point = get_obj.get_track(st_lon[i],st_lat[i],depth,track_way)
+        #if len(point['lon'])==1: 
+            #print '<script type="text/javascript">window.alert("The point on the land.")</script>'
+        lon_set[i] = point['lon']; lat_set[i] = point['lat']
+            
+if MODEL=='global': 
+    # Just global surface tracking. Wrote by Bingwei Ling at November 6, 2017
+    get_obj = get_fvcom(MODEL)
+    try:
+        url_roms,fmtime,emtime = get_obj.get_url(start_time,forecast_days)
+    except:
+        print '<h2>Model(%s) is unavailable temporarily. Try to use another model.</h2>'%(MODEL)
+        print '</head></html>'
+        sys.exit()
+    if url_roms=='error':
+        fmodtime = fmtime - timedelta(hours=ditnu)
+        emodtime = emtime - timedelta(hours=ditnu)
+        mstt = fmodtime.strftime('%m/%d/%Y %H:%M')
+        mett = emodtime.strftime('%m/%d/%Y %H:%M')
+        print '<h2>Time: Error! Model(%s) only works between %s with %s. <br>Tips: check step 5 or 6.</h2>'%(MODEL,mstt,mett)
+        print '<h3><font color="red">Your tracking time is from %s to %s.</font></h3>'%(start_time.strftime('%m/%d/%Y %H:%M'),end_time.strftime('%m/%d/%Y %H:%M'))
+        print '</head></html>'
+        sys.exit()
+    
+    for i in range(stp_num):
+        point = get_obj.get_globaltrack(st_lon[i],st_lat[i],depth,track_way)
+        #if len(point['lon'])==1: 
+            #print '<script type="text/javascript">window.alert("The point on the land.")</script>'
+        lon_set[i] = point['lon']; lat_set[i] = point['lat']
         
 print """
 <style type="text/css">
 body {
-    background-image: url(http://127.0.0.1:8000/20150412.jpg);
+    background-image: url(http://comet.nefsc.noaa.gov/ioos/track/20150412.jpg);
     background-repeat: repeat;
     background-position: top center;
     background-attachment: scroll;
@@ -199,7 +216,7 @@ function initialize() {
 	        position: pmarker,
 	        //animation:google.maps.Animation.BOUNCE
 	        title:'Start point',
-	        icon: 'http://127.0.0.1:8000/startmarker.png'
+	        icon: 'http://comet.nefsc.noaa.gov/ioos/track/startmarker.png'
         	});     
         marker.setMap(map);   
         var infowindow = new google.maps.InfoWindow({
@@ -218,7 +235,7 @@ function initialize() {
 	        position: pmarker,
 	        //animation:google.maps.Animation.BOUNCE
 	        title:'End point',
-	        icon: 'http://127.0.0.1:8000/endmarker.png'
+	        icon: 'http://comet.nefsc.noaa.gov/ioos/track/endmarker.png'
         	});     
         marker.setMap(map);   
         var infowindow = new google.maps.InfoWindow({
@@ -242,17 +259,36 @@ for i in xrange(stp_num):
         print 'pts[%d] = new google.maps.LatLng(%s,%s);'%(j,lat_set[i][j],lon_set[i][j])
     # plot line
     print """
+	var lineSymbol = {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          strokeColor: '#393'
+        };
     var ptsPath=new google.maps.Polyline({
+		map:map,
         path:pts,
+        icons: [{icon: lineSymbol,offset: '0%'}],"""
+    print """
         strokeColor:"%s",
         strokeOpacity:0.8,
         strokeWeight:4
         });
-    ptsPath.setMap(map);"""%colors[i%9]
+	animateCircle(ptsPath);
+    """%colors[i%9]
 
 print """
 }
 google.maps.event.addDomListener(window, 'load', initialize);
+function animateCircle(line) {
+  var count = 0;
+  window.setInterval(function() {
+    count = (count + 1) % 240;
+
+    var icons = line.get('icons');
+    icons[0].offset = (count / 2) + '%';
+    line.set('icons', icons);
+  }, 20);
+}
 </script>
 
 <script >
@@ -275,8 +311,8 @@ print """
 <script >
 function legendinstruction() {
     var w = window.open("","_blank","width=300,height=200,scrollbars=1");
-    w.document.write("<p><img src='http://127.0.0.1:8000/startmarker.png' /> : Start-point.</p>")
-    w.document.write("<p><img src='http://127.0.0.1:8000/endmarker.png' /> : End-point.</p>")
+    w.document.write("<p><img src='http://comet.nefsc.noaa.gov/ioos/track/startmarker.png' /> : Start-point.</p>")
+    w.document.write("<p><img src='http://comet.nefsc.noaa.gov/ioos/track/endmarker.png' /> : End-point.</p>")
     w.document.write("</p><font color='red' >Line(s)</font> is forecast trajectory.</p>");
     }
 </script>
@@ -287,10 +323,13 @@ function legendinstruction() {
 
 <div id="googleMap" ></div>
 
-<div id="footer" ><a href="http://127.0.0.1:8000/index.html"><input type="button" value="Track again" /></a>
+<div id="footer" ><a href="http://comet.nefsc.noaa.gov/ioos/track/index.html"><input type="button" value="Track again" /></a>
 <input type="button" value="Show lat/lon" onclick="show()" />
 <input type="button" value="Legend" onclick="legendinstruction()" />
 </div>
 """%(MODEL,track_way,tds)
 
-print '</script></body></html>'
+print '</script>'
+en_run_time = datetime.now()
+#print 'Take '+str(en_run_time-st_run_time)+' running the code.<br>Start at '+str(st_run_time)+'<br>End at   '+str(en_run_time)
+print '</body></html>'
