@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env /anaconda/bin/python
 import cgitb
 cgitb.enable()
 import cgi,sys
@@ -55,8 +55,8 @@ if ditnu < 0:
     ditnu = int(utct)+24-int(loct)
 
 # pass to html to show start-time and end-time of marker in ET. 
-sloctim = start_time-timedelta(hours=ditnu)
-eloctim = end_time-timedelta(hours=ditnu)
+sloctim = start_time#-timedelta(hours=ditnu)
+eloctim = end_time#-timedelta(hours=ditnu)
 stim = sloctim.strftime('%D %H:%M')
 etim = eloctim.strftime('%D %H:%M')
 #stim = (start_time-timedelta(hours=ditnu)).strftime('%D %H:%M')
@@ -64,37 +64,33 @@ etim = eloctim.strftime('%D %H:%M')
 
 if MODEL in GRID:
     get_obj =  get_fvcom(MODEL)
-    if (MODEL == 'massbay' or MODEL == 'GOM3') and depth < 2 :
-        bpoints = get_obj.sf_get_data(start_time,end_time)
-        
-        point = get_obj.sf_get_track(dr_points['lon'][-1],dr_points['lat'][-1],track_way)
-        if len(point['lon'])==1: 
-            print '<script type="text/javascript">window.alert("This point on the land.")</script>'
-    else:
-        try:
-            url_fvcom,fmtime,emtime = get_obj.get_data(start_time,end_time)
-        except:
-            print '<h2>Model(FVCOM:%s) is unavailable temporarily.Try to use another model.</h2>'%(MODEL)
-            print '</head></html>'
-            sys.exit()  
-        if url_fvcom=='error':
-            fmodtime = fmtime - timedelta(hours=ditnu)
-            emodtime = emtime - timedelta(hours=ditnu)
-            #print fmodtime,emodtime
-            mstt = fmodtime.strftime('%m/%d/%Y %H:%M')
-            mett = emodtime.strftime('%m/%d/%Y %H:%M')
     
-            print '<h2>Time: Error! Model(FVCOM:%s) only works between %s with %s. <br>Tips: check step 5.</h2>'%(MODEL,mstt,mett)
-            print '</head></html>'
-            sys.exit()    
+    try:
+        url_fvcom,fmtime,emtime = get_obj.get_data(start_time,end_time)
+    except:
+        print '<h2>Model(FVCOM:%s) is unavailable temporarily.Try to use another model.</h2>'%(MODEL)
+        print '</head></html>'
+        sys.exit()
+    # Check the time duration.  
+    if url_fvcom=='error':
+        fmodtime = fmtime# - timedelta(hours=ditnu)
+        emodtime = emtime# - timedelta(hours=ditnu)
+        #print fmodtime,emodtime
+        mstt = fmodtime.strftime('%m/%d/%Y %H:%M')
+        mett = emodtime.strftime('%m/%d/%Y %H:%M')
+
+        print '<h2>Time: Error! Model(FVCOM:%s) only works between %s with %s. <br>Tips: check step 5.</h2>'%(MODEL,mstt,mett)
+        print '<h3><font color="red">Your tracking time is from %s to %s.</font></h3>'%(start_time.strftime('%m/%d/%Y %H:%M'),end_time.strftime('%m/%d/%Y %H:%M'))
+        print '</head></html>'
+        sys.exit()    
         
-        point = get_obj.get_track(dr_points['lon'][-1],dr_points['lat'][-1],depth,track_way)
-        if len(point['lon'])==1: 
-            print '<script type="text/javascript">window.alert("The last point of drifter is out of the Model(%s) grid. Tips: change the Model grid(step 2), try again.")</script>'%MODEL
+    point = get_obj.get_track(dr_points['lon'][-1],dr_points['lat'][-1],depth,track_way)
+        
+    if len(point['lon'])==1: 
+        print '<script type="text/javascript">window.alert("The last point of drifter is out of the Model(%s) grid. Tips: change the Model grid(step 2), try again.")</script>'%MODEL
 
 if MODEL=='ROMS': 
-    get_obj = get_roms()
-    
+    get_obj = get_roms()    
     try:
         url_roms,fmtime,emtime = get_obj.get_data(start_time,end_time)
     except:
@@ -102,23 +98,48 @@ if MODEL=='ROMS':
         print '</head></html>'
         sys.exit()
     if url_roms=='error':
-        fmodtime = fmtime - timedelta(hours=ditnu)
-        emodtime = emtime - timedelta(hours=ditnu)
+        fmodtime = fmtime# - timedelta(hours=ditnu)
+        emodtime = emtime# - timedelta(hours=ditnu)
         mstt = fmodtime.strftime('%m/%d/%Y %H:%M')
         mett = emodtime.strftime('%m/%d/%Y %H:%M')
         print '<h2>Time: Error! Model(%s) only works between %s with %s. <br>Tips: check step 5 or 6.</h2>'%(MODEL,mstt,mett)
+        print '<h3><font color="red">Your tracking time is from %s to %s.</font></h3>'%(start_time.strftime('%m/%d/%Y %H:%M'),end_time.strftime('%m/%d/%Y %H:%M'))
         print '</head></html>'
         sys.exit()
-    if depth < 2:
-        point = get_obj.sf_get_track(dr_points['lon'][-1],dr_points['lat'][-1],track_way)
-    else:
-        point = get_obj.get_track(dr_points['lon'][-1],dr_points['lat'][-1],depth,track_way)
+    
+    point = get_obj.get_track(dr_points['lon'][-1],dr_points['lat'][-1],depth,track_way)
+    
     if len(point['lon'])==1: 
-        print '<script type="text/javascript">window.alert("Start point is out of the Model(%s) Zone. Tips: change the Model(step 2), try again.")</script>'%MODEL
+        print '<script type="text/javascript">window.alert("The last point of drifter is out of the Model(%s) Zone. Tips: change the Model(step 2), try again.")</script>'%MODEL
+
+if MODEL=='global': 
+    # Just global surface tracking. Wrote by Bingwei Ling at November 6, 2017
+    get_obj = get_fvcom(MODEL)
+    try:
+        url_roms,fmtime,emtime = get_obj.get_url(start_time,forecast_days)
+    except:
+        print '<h2>Model(%s) is unavailable temporarily. Try to use another model.</h2>'%(MODEL)
+        print '</head></html>'
+        sys.exit()
+    if url_roms=='error':
+        fmodtime = fmtime# - timedelta(hours=ditnu)
+        emodtime = emtime# - timedelta(hours=ditnu)
+        mstt = fmodtime.strftime('%m/%d/%Y %H:%M')
+        mett = emodtime.strftime('%m/%d/%Y %H:%M')
+        print '<h2>Time: Error! Model(%s) only works between %s with %s(GMT). <br>Tips: check step 5 or 6.</h2>'%(MODEL,mstt,mett)
+        print '<h3><font color="red">Your tracking time is from %s to %s(GMT). </font></h3>'%(start_time.strftime('%m/%d/%Y %H:%M'),end_time.strftime('%m/%d/%Y %H:%M'))
+        print '</head></html>'
+        sys.exit()
+    
+    point = get_obj.get_globaltrack(dr_points['lon'][-1], dr_points['lat'][-1],depth,track_way)
+    
+    if len(point['lon'])==1: 
+        print '<script type="text/javascript">window.alert("The last point of drifter is out of the Model(%s) Zone. Tips: change the Model(step 2), try again.")</script>'%MODEL
+
 print """
 <style type="text/css">
 body {
-    background-image: url(http://127.0.0.1:8000/20150412.jpg);
+    background-image: url(http://comet.nefsc.noaa.gov/ioos/track/20150412.jpg);
     background-repeat: repeat;
     background-position: top center;
     background-attachment: scroll;
@@ -176,11 +197,11 @@ function initialize() {
 	        position: pmarker,
 	        //animation:google.maps.Animation.BOUNCE
 	        title:'Start point',
-	        icon: 'http://127.0.0.1:8000/startmarker.png'
+	        icon: 'http://comet.nefsc.noaa.gov/ioos/track/startmarker.png'
         	});     
         marker.setMap(map);   
         var infowindow = new google.maps.InfoWindow({
-            content: 'Drifter ID: '+ID+'<br>Latitude: ' + parseFloat(pmarker.lat()).toFixed(6) +'<br>Longitude: ' + parseFloat(pmarker.lng()).toFixed(6)+'<br>StartTime: '+stim+' EDT'});
+            content: 'Drifter ID: '+ID+'<br>Latitude: ' + parseFloat(pmarker.lat()).toFixed(6) +'<br>Longitude: ' + parseFloat(pmarker.lng()).toFixed(6)+'<br>StartTime: '+stim+' GMT'});
           
         google.maps.event.addListener(marker, 'click', function() {
             map.setZoom(10);
@@ -195,11 +216,11 @@ function initialize() {
 	        position: pmarker,
 	        //animation:google.maps.Animation.BOUNCE
 	        title:'End point',
-	        icon: 'http://127.0.0.1:8000/endmarker.png'
+	        icon: 'http://comet.nefsc.noaa.gov/ioos/track/endmarker.png'
         	});     
         marker.setMap(map);   
         var infowindow = new google.maps.InfoWindow({
-            content: 'Drifter ID: '+ID+'<br>Latitude: ' + parseFloat(pmarker.lat()).toFixed(6) +'<br>Longitude: ' + parseFloat(pmarker.lng()).toFixed(6)+'<br>EndTime: '+etim+' EDT'});
+            content: 'Drifter ID: '+ID+'<br>Latitude: ' + parseFloat(pmarker.lat()).toFixed(6) +'<br>Longitude: ' + parseFloat(pmarker.lng()).toFixed(6)+'<br>EndTime: '+etim+' GMT'});
           
         google.maps.event.addListener(marker, 'click', function() {
             map.setZoom(10);
@@ -229,15 +250,34 @@ print 'var pts=[]'
 for j in xrange(len(point['lon'])):
     print 'pts[%d] = new google.maps.LatLng(%s,%s);'%(j,point['lat'][j],point['lon'][j])
 print """
+var lineSymbol = {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          strokeColor: '#393'
+        };
+
 var ptsPath=new google.maps.Polyline({
+    map:map,
     path:pts,
+    icons: [{icon: lineSymbol,offset: '0%'}],
     strokeColor:"red",
     strokeOpacity:0.8,
     strokeWeight:4
     });
-ptsPath.setMap(map);
+
+animateCircle(ptsPath);
 }
 google.maps.event.addDomListener(window, 'load', initialize);
+function animateCircle(line) {
+  var count = 0;
+  window.setInterval(function() {
+    count = (count + 1) % 240;
+
+    var icons = line.get('icons');
+    icons[0].offset = (count / 2) + '%';
+    line.set('icons', icons);
+  }, 20);
+}
 </script>
 """
 
@@ -263,8 +303,8 @@ w.document.close();
 <script>
 function legendinstruction() {
     var w = window.open("","_blank","width=300,height=230,scrollbars=1");
-    w.document.write("<p><img src='http://127.0.0.1:8000/startmarker.png' /> : Start-point.</p>")
-    w.document.write("<p><img src='http://127.0.0.1:8000/endmarker.png' /> : End-point.</p>")
+    w.document.write("<p><img src='http://comet.nefsc.noaa.gov/ioos/track/startmarker.png' /> : Start-point.</p>")
+    w.document.write("<p><img src='http://comet.nefsc.noaa.gov/ioos/track/endmarker.png' /> : End-point.</p>")
     w.document.write("</p><font color='blue' >Blue line</font> is drifter trajectory.</p>");
     w.document.write("</p><font color='red' >Red line</font> is forecast trajectory.</p>");
     }
@@ -276,7 +316,7 @@ function legendinstruction() {
 
 <div id="googleMap" ></div>
 
-<div id="footer" ><a href="http://127.0.0.1:8000/index2.html"><input type="button" value="Track again" /></a>
+<div id="footer" ><a href="http://comet.nefsc.noaa.gov/ioos/track/index2.html"><input type="button" value="Track again" /></a>
 <input type="button" value="Show lat/lon" onclick="show()" />
 <input type="button" value="Legend" onclick="legendinstruction()" />
 </div>
